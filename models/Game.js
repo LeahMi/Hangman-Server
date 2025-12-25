@@ -1,46 +1,68 @@
-import words from "../utils/words.js";
+import Round from "./Round.js";
 
 class Game {
-  constructor() {
-    this.word = this.getRandomWord();
-    this.guessedLetters = [];
-    this.wrongGuesses = 0;
-    this.maxWrongGuesses = 6;
-    this.status = "playing"; 
+  constructor(mode = 1, players = []) {
+    this.mode = mode; 
+    this.players = players;
+    this.currentPlayerIndex = 0;
+
+    this.currentRound = new Round();
+    this.roundsHistory = [];
+    this.scoreboard = {};
   }
 
-  getRandomWord() {
-    const randomIndex = Math.floor(Math.random() * words.length);
-    return words[randomIndex];
+  getCurrentPlayer() {
+    return this.players[this.currentPlayerIndex] || "Player";
   }
 
   guessLetter(letter) {
-    if (this.status !== "playing") {
+    if (this.currentRound.status !== "playing") {
       return;
     }
 
-    if (this.guessedLetters.includes(letter)) {
-      return;
+    this.currentRound.guessLetter(letter);
+  }
+
+  endRound() {
+    const player = this.getCurrentPlayer();
+
+    if (!this.scoreboard[player]) {
+      this.scoreboard[player] = 0;
     }
 
-    this.guessedLetters.push(letter);
-
-    if (!this.word.includes(letter)) {
-      this.wrongGuesses++;
+    if (this.currentRound.status === "won") {
+      this.scoreboard[player]++;
     }
 
-    const isWin = this.word
-      .split("")
-      .every(l => this.guessedLetters.includes(l));
+    this.roundsHistory.push({
+      player,
+      result: this.currentRound.status,
+      word: this.currentRound.word,
+    });
 
-    if (isWin) {
-      this.status = "won";
-      return;
+    if (this.mode === 2) {
+      this.currentPlayerIndex =
+        (this.currentPlayerIndex + 1) % this.players.length;
     }
 
-    if (this.wrongGuesses >= this.maxWrongGuesses) {
-      this.status = "lost";
-    }
+    this.currentRound = new Round();
+  }
+
+  getGameState() {
+    return {
+      mode: this.mode,
+      currentPlayer: this.getCurrentPlayer(),
+      maskedWord: this.currentRound.getMaskedWord(),
+      guessedLetters: this.currentRound.guessedLetters,
+      wrongGuesses: this.currentRound.wrongGuesses,
+      maxWrongGuesses: this.currentRound.maxWrongGuesses,
+      status: this.currentRound.status,
+      scoreboard: this.scoreboard,
+      word:
+        this.currentRound.status !== "playing"
+          ? this.currentRound.word
+          : undefined,
+    };
   }
 }
 

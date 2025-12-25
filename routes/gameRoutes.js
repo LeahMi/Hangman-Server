@@ -7,39 +7,35 @@ let game = null;
 
 router.post("/start", (req, res) => {
   game = new Game();
-  console.log("Starting a game")
-  res.json(game);
+  console.log("Starting a game");
+  res.json(game.getGameState());
 });
-
 
 router.get("/", (req, res) => {
   if (!game) {
     return res.status(400).json({ message: "No active game" });
   }
-  res.json(game);
+  res.json(game.getGameState());
 });
 
-
 router.post("/guess", (req, res) => {
-    if (!game) {
-        return res.status(400).json({ message: "No active game" });
-    }
+  if (!game) {
+    return res.status(400).json({ message: "No active game" });
+  }
 
-    let { letter } = req.body;
+  let { letter } = req.body;
 
-    if (!letter) {
-        return res.status(400).json({ message: "Letter is required" });
-    }
+  if (!letter) {
+    return res.status(400).json({ message: "Letter is required" });
+  }
 
-    if (!/^[a-z]$/i.test(letter)) {
-        return res.status(400).json({ message: "Invalid letter" });
-    }
+  if (!/^[a-z]$/i.test(letter)) {
+    return res.status(400).json({ message: "Invalid letter" });
+  }
 
-    letter = letter.toLowerCase();
+  game.guessLetter(letter.toLowerCase());
 
-    game.guessLetter(letter);
-
-    res.json(game);
+  res.json(game.getGameState());
 });
 
 export default router;
